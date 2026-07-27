@@ -1,0 +1,14 @@
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Python (backend phase)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Env files
+.env
+.env.local
