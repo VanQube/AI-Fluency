@@ -8,15 +8,17 @@ access to their shipment data. There is no end-user signup/login — identity is
 per-session, not account-based. The only persistent login is a single admin
 account for managing package/shipment data.
 
-Full program spec lives at `/docs/SecureShip-5Week-Program.md` — refer to it
-for anything not summarized below (Epics A–G, Section 4 full requirements,
-Section 6 architecture diagrams, Section 9 model setup).
+Full program spec lives at `/docs/SecureShip-5Week-Program.md`, split by
+section into `/docs/secureship/` — refer to it for anything not summarized
+below (Epics A–G, Section 4 full requirements, Section 6 architecture
+diagrams, Section 9 model setup). Live build status: `/docs/PROGRESS.md`.
 
 ## Implemented
 - React (Create React App + JavaScript) chat UI, styled with Tailwind CSS,
   talking to a real backend via generated React Query hooks (no hand-written
   fetch calls — Section 4.8)
-- FastAPI backend (`/health`, `/chat`) persisting every turn to Postgres
+- FastAPI backend (`/health`, `/chat`, `/verify-code`) persisting every turn
+  to Postgres
 - Postgres with `customers` / `shipments` / `packages` / `chat_sessions`
   tables, seeded via `scripts/seed_data.py`
 - Ollama running on the **host** (not containerized — Section 4.7, Metal
@@ -26,19 +28,21 @@ Section 6 architecture diagrams, Section 9 model setup).
 - Orval generates typed React Query hooks from the backend's live
   `/openapi.json` (`npm run generate:api` inside `frontend/`)
 - Full Docker Compose dev environment (frontend, backend, postgres containers)
+- **Identity collection + 2FA gate (Epics B, C, G)** — the full
+  Anonymous → CollectingIdentity → CodeSent/AwaitingCode → Verified state
+  machine, backend-orchestrated (not native LLM tool-calling — see
+  `docs/PROGRESS.md` Week 2 for the design call). Identity matching
+  (`backend/tools/verify_identity.py`), mocked 2FA with a 10-min expiry and
+  3-attempt lockout (`backend/tools/`), the on-demand `CodeModal`, and the
+  cosmetic human-escalation sequence (Epic G) are all wired end-to-end.
 
-There is **no identity verification or tool-calling gating yet** — anyone can
-ask the assistant anything and get a real model response. This is intentional
-at this point, not a bug: the model currently has no tools and no data access
-at all, so it can't leak anything it doesn't have.
+There is **no shipment-lookup tool-calling yet (Epic F)** — a verified
+session can chat, but there's still nothing that hands it real shipment
+data. That's Week 3.
 
 ## Not yet implemented
-- Identity collection (name/address/phone) and neutral-failure matching
-  (Epic B)
-- Mock 2FA (6-digit code, modal, expiry/attempts) (Epic C)
-- Tool-calling / gating enforcement (`verify_identity`, `lookup_shipments`,
+- Tool-calling / gating enforcement for shipment data (`lookup_shipments`,
   etc.) (Epic F)
-- Human escalation theater (Epic G)
 - Admin panel + Auth0 (Epic E)
 
 ## Tech stack
@@ -126,15 +130,17 @@ to regenerate the typed hooks, then commit the regenerated output.
   tsconfig.json           <- generated-code-only TS support (see tradeoffs above)
   /src
     /api/generated        <- Orval output, do not hand-edit
-    /components          <- ChatWindow, MessageList, MessageInput
+    /components          <- ChatWindow, MessageList, MessageInput, CodeModal
 /backend
   Dockerfile
   main.py                <- app entrypoint, health-check, CORS
-  /routes                <- chat.py
-  /llm                    <- ollama_client.py
-  /models                 <- Customer, Shipment, Package, ChatSession (SQLAlchemy)
+  gating.py               <- Section 6.2 state machine, orchestrates chat + verify-code
+  /routes                <- chat.py, verify.py
+  /tools                  <- verify_identity, send/check_verification_code, intent heuristics
+  /llm                     <- ollama_client.py, extraction.py (identity-field extraction)
+  /models                  <- Customer, Shipment, Package, ChatSession (SQLAlchemy)
   /db                      <- session.py (engine/session), base.py
-  /schemas                <- Pydantic request/response models
+  /schemas                 <- Pydantic request/response models (chat.py, verify.py)
 docker-compose.yml
 README.md
 ```
