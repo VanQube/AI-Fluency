@@ -33,6 +33,37 @@ export interface ChatResponse {
   reply: string;
   state: string;
   timestamp: string;
+  known_first_name?: string | null;
+}
+
+export type ChatStreamEventType = typeof ChatStreamEventType[keyof typeof ChatStreamEventType];
+
+
+export const ChatStreamEventType = {
+  token: 'token',
+  done: 'done',
+  error: 'error',
+} as const;
+
+/**
+ * Shape of each Server-Sent Event on POST /chat/stream. Exported to the
+ * frontend as a plain TS type via the dummy endpoint below (Section 4.8's
+ * pattern for payloads with no backing REST response — SSE, like WS, has
+ * no normal JSON response body for Orval/openapi-typescript to see).
+ *
+ * type == "token": `content` is the next text chunk to append.
+ * type == "done": the turn is finished — `reply` is the full assembled
+ *   text, plus the same metadata ChatResponse would have carried.
+ * type == "error": streaming failed partway through (e.g. Ollama dropped
+ *   the connection) — frontend shows its usual connection-trouble message.
+ */
+export interface ChatStreamEvent {
+  type: ChatStreamEventType;
+  content?: string | null;
+  reply?: string | null;
+  session_id?: string | null;
+  state?: string | null;
+  known_first_name?: string | null;
 }
 
 export interface ValidationError {
@@ -43,6 +74,18 @@ export interface ValidationError {
 
 export interface HTTPValidationError {
   detail?: ValidationError[];
+}
+
+export interface VerifyCodeRequest {
+  session_id: string;
+  code: string;
+}
+
+export interface VerifyCodeResponse {
+  session_id: string;
+  verified: boolean;
+  state: string;
+  message: string;
 }
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
@@ -275,4 +318,191 @@ export const useSendChatMessage = <TError = HTTPValidationError,
         TContext
       > => {
       return useMutation(getSendChatMessageMutationOptions(options), queryClient);
+    }
+
+export type verifyCodeResponse200 = {
+  data: VerifyCodeResponse
+  status: 200
+}
+
+export type verifyCodeResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type verifyCodeResponseSuccess = (verifyCodeResponse200) & {
+  headers: Headers;
+};
+export type verifyCodeResponseError = (verifyCodeResponse422) & {
+  headers: Headers;
+};
+
+export type verifyCodeResponse = (verifyCodeResponseSuccess | verifyCodeResponseError)
+
+export const getVerifyCodeUrl = () => {
+
+
+
+
+  return `http://localhost:8000/verify-code`
+}
+
+/**
+ * @summary Post Verify Code
+ */
+export const verifyCode = async (verifyCodeRequest: VerifyCodeRequest, options?: RequestInit): Promise<verifyCodeResponse> => {
+
+  const res = await fetch(getVerifyCodeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(verifyCodeRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: verifyCodeResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as verifyCodeResponse
+}
+
+
+
+
+
+export const getVerifyCodeMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCode>>, TError,{data: VerifyCodeRequest}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyCode>>, TError,{data: VerifyCodeRequest}, TContext> => {
+
+const mutationKey = ['verifyCode'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyCode>>, {data: VerifyCodeRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  verifyCode(data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyCodeMutationResult = NonNullable<Awaited<ReturnType<typeof verifyCode>>>
+    export type VerifyCodeMutationBody = VerifyCodeRequest
+    export type VerifyCodeMutationError = HTTPValidationError
+
+    /**
+ * @summary Post Verify Code
+ */
+export const useVerifyCode = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCode>>, TError,{data: VerifyCodeRequest}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof verifyCode>>,
+        TError,
+        {data: VerifyCodeRequest},
+        TContext
+      > => {
+      return useMutation(getVerifyCodeMutationOptions(options), queryClient);
+    }
+
+export type chatStreamEventTypeResponse200 = {
+  data: ChatStreamEvent
+  status: 200
+}
+
+export type chatStreamEventTypeResponseSuccess = (chatStreamEventTypeResponse200) & {
+  headers: Headers;
+};
+;
+
+export type chatStreamEventTypeResponse = (chatStreamEventTypeResponseSuccess)
+
+export const getChatStreamEventTypeUrl = () => {
+
+
+
+
+  return `http://localhost:8000/_types/chat-stream-events`
+}
+
+/**
+ * @summary  Chat Stream Event Type
+ */
+export const chatStreamEventType = async ( options?: RequestInit): Promise<chatStreamEventTypeResponse> => {
+
+  const res = await fetch(getChatStreamEventTypeUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: chatStreamEventTypeResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as chatStreamEventTypeResponse
+}
+
+
+
+
+
+export const getChatStreamEventTypeMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatStreamEventType>>, TError,void, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof chatStreamEventType>>, TError,void, TContext> => {
+
+const mutationKey = ['chatStreamEventType'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof chatStreamEventType>>, void> = () => {
+
+
+          return  chatStreamEventType(fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChatStreamEventTypeMutationResult = NonNullable<Awaited<ReturnType<typeof chatStreamEventType>>>
+
+    export type ChatStreamEventTypeMutationError = unknown
+
+    /**
+ * @summary  Chat Stream Event Type
+ */
+export const useChatStreamEventType = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatStreamEventType>>, TError,void, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof chatStreamEventType>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getChatStreamEventTypeMutationOptions(options), queryClient);
     }

@@ -1,8 +1,16 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from db.session import create_all_tables
+from routes._types_chat_events import router as types_chat_events_router
 from routes.chat import router as chat_router
+from routes.verify import router as verify_router
+
+# INFO so the mock-SMS code log (tools/send_verification_code.py) is
+# actually visible in `docker compose logs backend` during a demo.
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
 
 app = FastAPI(title="SecureShip Backend", version="0.1.0")
 
@@ -28,3 +36,5 @@ def health():
 
 
 app.include_router(chat_router)
+app.include_router(verify_router)
+app.include_router(types_chat_events_router)
