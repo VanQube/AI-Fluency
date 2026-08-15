@@ -12,3 +12,6 @@ venv/
 # Env files
 .env
 .env.local
+
+# Playwright MCP scratch output (screenshots/snapshots/logs from live testing)
+.playwright-mcp/

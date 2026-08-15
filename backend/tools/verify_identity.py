@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 from sqlalchemy import func
@@ -8,7 +9,24 @@ from models.chat_session import IDENTITY_FIELD_KEYS
 
 
 def _norm(value: Optional[str]) -> str:
-    return (value or "").strip().casefold()
+    # Collapse whitespace (incl. around commas) so "123 Main St,  Springfield,IL"
+    # and "123 Main St, Springfield, IL" compare equal — customers won't type
+    # punctuation/spacing identically to the seeded data, and that's not a
+    # meaningful part of "did they give us the right address."
+    collapsed = re.sub(r"\s*,\s*", ", ", (value or "").strip())
+    collapsed = re.sub(r"\s+", " ", collapsed)
+    return collapsed.casefold()
+
+
+def _norm_phone(value: Optional[str]) -> str:
+    # Compare on digits only, and ignore a leading US country code (1) on
+    # whichever side has one — customers type "619-737-2097" or
+    # "(619) 737-2097", never the "+16197372097" form we store, and a
+    # legitimate match shouldn't hinge on punctuation or an optional "1".
+    digits = re.sub(r"\D", "", value or "")
+    if len(digits) == 11 and digits.startswith("1"):
+        digits = digits[1:]
+    return digits
 
 
 def verify_identity(db: Session, collected_fields: dict) -> Optional[Customer]:
@@ -36,7 +54,7 @@ def verify_identity(db: Session, collected_fields: dict) -> Optional[Customer]:
         .all()
     )
     for customer in candidates:
-        if _norm(customer.phone_number) == _norm(
+        if _norm_phone(customer.phone_number) == _norm_phone(
             collected_fields["phone_number"]
         ) and _norm(customer.address) == _norm(collected_fields["address"]):
             return customer
