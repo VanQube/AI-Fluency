@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^13.5.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-markdown": "^10.1.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
@@ -27,7 +28,9 @@
     ],
     "overrides": [
       {
-        "files": ["src/api/generated/**/*"],
+        "files": [
+          "src/api/generated/**/*"
+        ],
         "rules": {
           "no-redeclare": "off",
           "@typescript-eslint/no-redeclare": "off"

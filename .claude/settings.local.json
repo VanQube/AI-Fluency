@@ -23,7 +23,15 @@
       "Bash(ollama show *)",
       "Read(//Applications/**)",
       "Bash(brew list *)",
-      "Bash(pg_isready)"
+      "Bash(pg_isready)",
+      "Bash(grep -n \"^## \\\\|^---$\" \"/Users/Ivan_Yakubchyk/AI Fluency/docs/SecureShip-5Week-Program.md\")",
+      "Bash(mkdir -p \"./docs/secureship\" && ls \"./docs\")",
+      "Bash(python3)",
+      "Bash(grep -c '^```' \"/Users/Ivan_Yakubchyk/AI Fluency/docs/secureship/06-architecture.md\")",
+      "Bash(xargs -I{} echo {})"
+    ],
+    "additionalDirectories": [
+      "/Users/Ivan_Yakubchyk/AI Fluency/docs"
     ]
   }
 }

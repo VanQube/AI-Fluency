@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Iterator
+from typing import Iterator, Optional
 
 import requests
 
@@ -10,10 +10,11 @@ import requests
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3:8b")
 
-# Still no native Ollama tool-calling (Epic F's `tools/` package is backend-
-# orchestrated by design — see Section 8 Week 2 notes). `chat_json` below is
-# just Ollama's structured-output mode (`format: "json"`), used for identity-
-# field extraction (Epic B2) — the model never decides what unlocks data.
+# `chat_json` below is Ollama's structured-output mode (`format: "json"`),
+# used for identity-field extraction (Epic B2) — separate from the native
+# tool-calling in `chat_with_tools` below (Epic F, Week 3), which is what
+# lets the model *request* a shipment lookup without ever executing it
+# itself. The model proposes a tool call; the backend decides (gating.py).
 
 
 def chat(messages: list[dict]) -> str:
@@ -50,6 +51,32 @@ def chat_stream(messages: list[dict]) -> Iterator[str]:
             yield content
         if chunk.get("done"):
             break
+
+
+def chat_with_tools(messages: list[dict], tools: list[dict]) -> dict:
+    """Non-streaming call with tool definitions attached. Returns the raw
+    `message` dict from Ollama's response — `message["content"]` if the
+    model just replied in prose, or `message["tool_calls"]` (a list of
+    `{"function": {"name": str, "arguments": dict}}`) if it wants to invoke
+    one. The backend (gating.py) decides whether/how to actually run it —
+    this function only relays the model's *request*, same as the sequence
+    in Section 6.3. Not streamed: a tool call has to be fully received
+    before it can be acted on, so this is always the first hop of a
+    two-hop hand-off (tool round-trip, then `chat_stream` for the final
+    prose reply once the tool result is available).
+    """
+    response = requests.post(
+        f"{OLLAMA_HOST}/api/chat",
+        json={
+            "model": OLLAMA_MODEL,
+            "messages": messages,
+            "tools": tools,
+            "stream": False,
+        },
+        timeout=120,
+    )
+    response.raise_for_status()
+    return response.json()["message"]
 
 
 def chat_json(messages: list[dict]) -> dict:
