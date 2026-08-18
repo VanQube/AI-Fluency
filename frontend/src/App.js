@@ -1,4 +1,7 @@
+import { Routes, Route, Link } from 'react-router-dom';
 import ChatWindow from './components/ChatWindow/ChatWindow';
+import AdminApp from './admin/AdminApp';
+import ProtectedRoute from './admin/ProtectedRoute';
 
 // Title-card strip, riffing on the show's signature split-color cards
 // (solid color blocks, thin black dividers, bold condensed display type).
@@ -26,12 +29,37 @@ function TitleCard() {
   );
 }
 
-function App() {
+function ChatPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-saul-black p-4">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-saul-black p-4">
+      {/* Epic E — separate identity system from the chat's conversational
+          verification (Epics B/C); this just navigates to /admin, which
+          handles the real Auth0 login redirect via ProtectedRoute. */}
+      <Link
+        to="/admin"
+        className="absolute right-4 top-4 rounded-sm border border-saul-cream/30 px-3 py-1.5 font-typewriter text-xs text-saul-cream/70 hover:border-saul-cream hover:text-saul-cream"
+      >
+        Admin login
+      </Link>
       <TitleCard />
       <ChatWindow />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<ChatPage />} />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminApp />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 }
 

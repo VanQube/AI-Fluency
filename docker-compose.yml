@@ -9,6 +9,9 @@ services:
       - "3000:3000"
     environment:
       - REACT_APP_API_BASE_URL=http://localhost:8000
+      - REACT_APP_AUTH0_DOMAIN=dev-afmxf6yaz005s2jo.us.auth0.com
+      - REACT_APP_AUTH0_CLIENT_ID=BjEgGkVC99ws7HRb4e5huR5PM43GiiNv
+      - REACT_APP_AUTH0_AUDIENCE=https://secureship-admin-api
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -23,6 +26,8 @@ services:
       - DATABASE_URL=postgresql://user:pass@postgres:5432/secureship
       - OLLAMA_HOST=http://host.docker.internal:11434
       - OLLAMA_MODEL=qwen3:8b
+      - AUTH0_DOMAIN=dev-afmxf6yaz005s2jo.us.auth0.com
+      - AUTH0_AUDIENCE=https://secureship-admin-api
     volumes:
       - ./backend:/app
       - ./scripts:/app/scripts

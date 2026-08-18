@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from db.session import create_all_tables
 from routes._types_chat_events import router as types_chat_events_router
+from routes.admin import router as admin_router
 from routes.chat import router as chat_router
 from routes.verify import router as verify_router
 
@@ -37,4 +38,5 @@ def health():
 
 app.include_router(chat_router)
 app.include_router(verify_router)
+app.include_router(admin_router)
 app.include_router(types_chat_events_router)
