@@ -11,7 +11,7 @@ Live tracking of the actual build against the plan in [08-weekly-plan.md](secure
 | 1 | Week 1 | Kickoff, skeleton, local LLM wired in | ✅ Done | ☐ Not yet presented |
 | 2 | Week 2 | Identity collection + 2FA gate | ✅ Done (click-through verified; code review still open) | ☐ Not yet presented |
 | 3 | Week 3 | Tool-calling for shipment data | ✅ Done (click-through verified; code review still open) | ☐ Not yet presented |
-| 4 | Week 4 | Admin panel (Auth0) | ⬜ Not started | ☐ |
+| 4 | Week 4 | Admin panel (Auth0) | ✅ Done (click-through verified; code review still open) | ☐ Not yet presented |
 | 5 | Week 5 | Hardening, docs, final demo | ⬜ Not started | ☐ |
 
 ---
@@ -112,14 +112,35 @@ This only changes *routing* (which branch of the state machine handles a turn) �
 
 ---
 
-## Week 4 — Phase 4: Admin Panel ⬜
+## Week 4 — Phase 4: Admin Panel ✅
 
-- [ ] Auth0 integrated for admin login only, built using the Auth0 Agent Skills
-- [ ] Admin panel: create/edit/delete Customer, Shipment, and Package records
-- [ ] Backend admin routes protected by middleware validating the IdP token (Epic E3)
-- [ ] Confirmed: no path lets an admin "become" a verified chat session, and no path lets a chat session reach admin routes
+- [x] Auth0 integrated for admin login only, built using the Auth0 Agent Skills — backend via `auth0-fastapi-api` (`backend/admin_auth.py`), frontend via `@auth0/auth0-react` (`frontend/src/index.js`'s `Auth0Provider`, `frontend/src/admin/ProtectedRoute.js`)
+- [x] Admin panel: create/edit/delete Customer, Shipment, and Package records — `backend/routes/admin.py` (`/admin/customers`, `/admin/shipments`, `/admin/packages`, full CRUD), `backend/schemas/admin.py`, `frontend/src/admin/{AdminApp,CustomerManager,ShipmentManager,PackageManager,AdminTable}.js`, mounted at `/admin` via `react-router-dom`
+- [x] Backend admin routes protected by middleware validating the IdP token (Epic E3) — `backend/admin_auth.py`'s `require_admin` is now `Auth0FastAPI(domain=..., audience=...).require_auth()`, validating signature/issuer/audience against the tenant's JWKS. `AUTH0_DOMAIN`/`AUTH0_AUDIENCE` (backend) and `REACT_APP_AUTH0_DOMAIN`/`REACT_APP_AUTH0_CLIENT_ID`/`REACT_APP_AUTH0_AUDIENCE` (frontend) live in `docker-compose.yml`'s `environment:` blocks, matching the project's existing env-var convention (no `.env` file introduced). Confirmed live: no token → 400, malformed token → 401, valid token → 200.
+- [x] Confirmed: no path lets an admin "become" a verified chat session, and no path lets a chat session reach admin routes (Epic E4) — verified both directions live: `POST /chat` and `POST /verify-code` return 200 and behave identically regardless of what's in the `Authorization` header (those routes never read it — an Auth0 admin token has zero effect there); `/admin/*` rejects a garbage bearer token with 401 and rejects no token at all with 400, regardless of what chat-shaped data (`session_id` etc.) rides along with the request.
 
-**Demo (Milestone 4):** admin login, a CRUD operation, and the chat reflecting that change live.
+**Design note — policy:** "any authenticated Auth0 user is an admin," no separate allowlist/role check (confirmed with you 2026-08-15). No `ADMIN_USER` table mirrored locally, per the ERD note in `docs/secureship/06-architecture.md` — Auth0 is the sole source of truth.
+
+**Bug found and fixed during CRUD implementation:** deleting a `Customer`/`Shipment` that still had dependent `Shipment`/`Package` rows crashed with a raw 500 (unhandled `IntegrityError` from the FK constraint) instead of a clean error. Fixed with a `_delete_or_409` helper in `routes/admin.py` that catches `IntegrityError`, rolls back, and returns 409 with a message identifying the conflict. Verified live (curl + browser): deleting a referenced customer/shipment now returns 409 with "still has shipments/packages on file"; deleting after removing the dependents succeeds (204).
+
+**Auth0 setup gotchas hit and resolved (2026-08-18, worth knowing if you ever recreate the tenant):**
+- The Application must be explicitly authorized for the API under **Applications → APIs → SecureShip Admin API → Application Access → [app] → User-Delegated Access** tab specifically — the adjacent "Client Access" tab is for the machine-to-machine `client_credentials` grant and does *not* cover the Authorization Code + PKCE flow the SPA actually uses. Authorizing the wrong tab produces `invalid_request: Client "..." is not authorized to access resource server "..."` on every login attempt.
+- **Allowed Logout URLs** needed both `http://localhost:3000/admin` (unused in practice) and bare `http://localhost:3000` — the logout button intentionally returns to the chat page (`window.location.origin`, no path) rather than bouncing straight back into another login prompt at `/admin`, so the bare origin has to be registered too or Auth0 400s on logout.
+
+**Verified so far (2026-08-18, live against the real Auth0 tenant + running stack):**
+- Full CRUD lifecycle (create → update → list → delete, including the 409 conflict path) via curl and via Playwright in the browser
+- Full secured click-through via Playwright, driving the *actual* Auth0 Universal Login with a real test account: logged-out visit to `/admin` → redirected to Auth0 hosted login → real credentials submitted → redirected back to `/admin` with a working session → created and deleted a test customer using real authenticated API calls → clicked Log out → landed back on `/` → re-visited `/admin` → correctly bounced to Auth0 login again (session actually cleared, not cached)
+- **Milestone 4's exact demo requirement, end to end:** verified a real chat session as customer Mia Novak (full identity gate + mocked 2FA code from the backend logs) → asked about shipment `MX720930395`, got "Out for delivery" → edited that shipment's status to "delivered" through the real logged-in admin UI → asked the *same still-open verified chat session* again → got "Delivered" back, no reconnect or cache-bust needed (shipment lookups always hit the DB directly, no session-level caching to invalidate). Reverted the status back to `out_for_delivery` afterward to leave seed data clean.
+- Epic E4 separation re-confirmed with real tokens in play (see checklist item above)
+- `scripts/test_tool_scoping.py` re-run clean — Week 3's Epic F enforcement untouched by the admin routes/middleware
+- `/` (the chat page) unaffected by `react-router-dom` + `Auth0Provider` — confirmed live, chat still loads and greets normally
+
+**Not yet done — needs a human:**
+- [ ] Code review of `backend/routes/admin.py` and `backend/admin_auth.py` — same bar as the still-open Week 2/3 reviews of `gating.py`/`tools/` noted above, worth batching together
+- [ ] Sign off on the "any authenticated Auth0 user is an admin" policy for real (confirmed verbally during the build, but worth a deliberate second look now that it's live) — decide whether an allowlist is warranted before this goes anywhere near a non-training environment
+- [ ] `docker-compose.yml` now carries the Auth0 domain, SPA client ID, and API audience in plaintext — none of these are secrets (no client secret is used; the SPA flow is public-client PKCE), but worth a quick sanity check that nothing more sensitive ended up there before this repo is shared further
+
+**Demo (Milestone 4):** admin login, a CRUD operation, and the chat reflecting that change live — **all verified working**, see the Mia Novak walkthrough above.
 
 ---
 

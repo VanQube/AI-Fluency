@@ -66,6 +66,28 @@ export interface ChatStreamEvent {
   known_first_name?: string | null;
 }
 
+export interface CustomerCreate {
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  address: string;
+}
+
+export interface CustomerRead {
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  address: string;
+  id: string;
+}
+
+export interface CustomerUpdate {
+  first_name?: string | null;
+  last_name?: string | null;
+  phone_number?: string | null;
+  address?: string | null;
+}
+
 export interface ValidationError {
   loc: (string | number)[];
   msg: string;
@@ -74,6 +96,64 @@ export interface ValidationError {
 
 export interface HTTPValidationError {
   detail?: ValidationError[];
+}
+
+export interface PackageCreate {
+  shipment_id: string;
+  description: string;
+  weight_kg: number | string;
+  declared_value: number | string;
+}
+
+export interface PackageRead {
+  shipment_id: string;
+  description: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  weight_kg: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  declared_value: string;
+  id: string;
+}
+
+export interface PackageUpdate {
+  shipment_id?: string | null;
+  description?: string | null;
+  weight_kg?: number | string | null;
+  declared_value?: number | string | null;
+}
+
+export interface ShipmentCreate {
+  customer_id: string;
+  tracking_number: string;
+  status: string;
+  carrier: string;
+  origin: string;
+  destination: string;
+  estimated_delivery: string;
+  last_update: string;
+}
+
+export interface ShipmentRead {
+  customer_id: string;
+  tracking_number: string;
+  status: string;
+  carrier: string;
+  origin: string;
+  destination: string;
+  estimated_delivery: string;
+  last_update: string;
+  id: string;
+}
+
+export interface ShipmentUpdate {
+  customer_id?: string | null;
+  tracking_number?: string | null;
+  status?: string | null;
+  carrier?: string | null;
+  origin?: string | null;
+  destination?: string | null;
+  estimated_delivery?: string | null;
+  last_update?: string | null;
 }
 
 export interface VerifyCodeRequest {
@@ -415,6 +495,1623 @@ export const useVerifyCode = <TError = HTTPValidationError,
         TContext
       > => {
       return useMutation(getVerifyCodeMutationOptions(options), queryClient);
+    }
+
+export type listCustomersResponse200 = {
+  data: CustomerRead[]
+  status: 200
+}
+
+export type listCustomersResponseSuccess = (listCustomersResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listCustomersResponse = (listCustomersResponseSuccess)
+
+export const getListCustomersUrl = () => {
+
+
+
+
+  return `http://localhost:8000/admin/customers`
+}
+
+/**
+ * @summary List Customers
+ */
+export const listCustomers = async ( options?: RequestInit): Promise<listCustomersResponse> => {
+
+  const res = await fetch(getListCustomersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listCustomersResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as listCustomersResponse
+}
+
+
+
+
+
+export const getListCustomersQueryKey = () => {
+    return [
+    `http://localhost:8000/admin/customers`
+    ] as const;
+    }
+
+
+export const getListCustomersQueryOptions = <TData = Awaited<ReturnType<typeof listCustomers>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomers>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCustomersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCustomers>>> = ({ signal }) => listCustomers({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCustomers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListCustomersQueryResult = NonNullable<Awaited<ReturnType<typeof listCustomers>>>
+export type ListCustomersQueryError = unknown
+
+
+export function useListCustomers<TData = Awaited<ReturnType<typeof listCustomers>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomers>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCustomers>>,
+          TError,
+          Awaited<ReturnType<typeof listCustomers>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListCustomers<TData = Awaited<ReturnType<typeof listCustomers>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomers>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCustomers>>,
+          TError,
+          Awaited<ReturnType<typeof listCustomers>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListCustomers<TData = Awaited<ReturnType<typeof listCustomers>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomers>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Customers
+ */
+
+export function useListCustomers<TData = Awaited<ReturnType<typeof listCustomers>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomers>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListCustomersQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type createCustomerResponse201 = {
+  data: CustomerRead
+  status: 201
+}
+
+export type createCustomerResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type createCustomerResponseSuccess = (createCustomerResponse201) & {
+  headers: Headers;
+};
+export type createCustomerResponseError = (createCustomerResponse422) & {
+  headers: Headers;
+};
+
+export type createCustomerResponse = (createCustomerResponseSuccess | createCustomerResponseError)
+
+export const getCreateCustomerUrl = () => {
+
+
+
+
+  return `http://localhost:8000/admin/customers`
+}
+
+/**
+ * @summary Create Customer
+ */
+export const createCustomer = async (customerCreate: CustomerCreate, options?: RequestInit): Promise<createCustomerResponse> => {
+
+  const res = await fetch(getCreateCustomerUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customerCreate)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createCustomerResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as createCustomerResponse
+}
+
+
+
+
+
+export const getCreateCustomerMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCustomer>>, TError,{data: CustomerCreate}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof createCustomer>>, TError,{data: CustomerCreate}, TContext> => {
+
+const mutationKey = ['createCustomer'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCustomer>>, {data: CustomerCreate}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCustomer(data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof createCustomer>>>
+    export type CreateCustomerMutationBody = CustomerCreate
+    export type CreateCustomerMutationError = HTTPValidationError
+
+    /**
+ * @summary Create Customer
+ */
+export const useCreateCustomer = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCustomer>>, TError,{data: CustomerCreate}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createCustomer>>,
+        TError,
+        {data: CustomerCreate},
+        TContext
+      > => {
+      return useMutation(getCreateCustomerMutationOptions(options), queryClient);
+    }
+
+export type getCustomerResponse200 = {
+  data: CustomerRead
+  status: 200
+}
+
+export type getCustomerResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type getCustomerResponseSuccess = (getCustomerResponse200) & {
+  headers: Headers;
+};
+export type getCustomerResponseError = (getCustomerResponse422) & {
+  headers: Headers;
+};
+
+export type getCustomerResponse = (getCustomerResponseSuccess | getCustomerResponseError)
+
+export const getGetCustomerUrl = (customerId: string,) => {
+
+
+
+
+  return `http://localhost:8000/admin/customers/${customerId}`
+}
+
+/**
+ * @summary Get Customer
+ */
+export const getCustomer = async (customerId: string, options?: RequestInit): Promise<getCustomerResponse> => {
+
+  const res = await fetch(getGetCustomerUrl(customerId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getCustomerResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getCustomerResponse
+}
+
+
+
+
+
+export const getGetCustomerQueryKey = (customerId: string,) => {
+    return [
+    `http://localhost:8000/admin/customers/${customerId}`
+    ] as const;
+    }
+
+
+export const getGetCustomerQueryOptions = <TData = Awaited<ReturnType<typeof getCustomer>>, TError = HTTPValidationError>(customerId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerQueryKey(customerId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomer>>> = ({ signal }) => getCustomer(customerId, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: customerId !== null && customerId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCustomerQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomer>>>
+export type GetCustomerQueryError = HTTPValidationError
+
+
+export function useGetCustomer<TData = Awaited<ReturnType<typeof getCustomer>>, TError = HTTPValidationError>(
+ customerId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCustomer>>,
+          TError,
+          Awaited<ReturnType<typeof getCustomer>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCustomer<TData = Awaited<ReturnType<typeof getCustomer>>, TError = HTTPValidationError>(
+ customerId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCustomer>>,
+          TError,
+          Awaited<ReturnType<typeof getCustomer>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCustomer<TData = Awaited<ReturnType<typeof getCustomer>>, TError = HTTPValidationError>(
+ customerId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Customer
+ */
+
+export function useGetCustomer<TData = Awaited<ReturnType<typeof getCustomer>>, TError = HTTPValidationError>(
+ customerId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCustomerQueryOptions(customerId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type updateCustomerResponse200 = {
+  data: CustomerRead
+  status: 200
+}
+
+export type updateCustomerResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type updateCustomerResponseSuccess = (updateCustomerResponse200) & {
+  headers: Headers;
+};
+export type updateCustomerResponseError = (updateCustomerResponse422) & {
+  headers: Headers;
+};
+
+export type updateCustomerResponse = (updateCustomerResponseSuccess | updateCustomerResponseError)
+
+export const getUpdateCustomerUrl = (customerId: string,) => {
+
+
+
+
+  return `http://localhost:8000/admin/customers/${customerId}`
+}
+
+/**
+ * @summary Update Customer
+ */
+export const updateCustomer = async (customerId: string,
+    customerUpdate: CustomerUpdate, options?: RequestInit): Promise<updateCustomerResponse> => {
+
+  const res = await fetch(getUpdateCustomerUrl(customerId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customerUpdate)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: updateCustomerResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as updateCustomerResponse
+}
+
+
+
+
+
+export const getUpdateCustomerMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomer>>, TError,{customerId: string;data: CustomerUpdate}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCustomer>>, TError,{customerId: string;data: CustomerUpdate}, TContext> => {
+
+const mutationKey = ['updateCustomer'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCustomer>>, {customerId: string;data: CustomerUpdate}> = (props) => {
+          const {customerId,data} = props ?? {};
+
+          return  updateCustomer(customerId,data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof updateCustomer>>>
+    export type UpdateCustomerMutationBody = CustomerUpdate
+    export type UpdateCustomerMutationError = HTTPValidationError
+
+    /**
+ * @summary Update Customer
+ */
+export const useUpdateCustomer = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomer>>, TError,{customerId: string;data: CustomerUpdate}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateCustomer>>,
+        TError,
+        {customerId: string;data: CustomerUpdate},
+        TContext
+      > => {
+      return useMutation(getUpdateCustomerMutationOptions(options), queryClient);
+    }
+
+export type deleteCustomerResponse204 = {
+  data: void
+  status: 204
+}
+
+export type deleteCustomerResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type deleteCustomerResponseSuccess = (deleteCustomerResponse204) & {
+  headers: Headers;
+};
+export type deleteCustomerResponseError = (deleteCustomerResponse422) & {
+  headers: Headers;
+};
+
+export type deleteCustomerResponse = (deleteCustomerResponseSuccess | deleteCustomerResponseError)
+
+export const getDeleteCustomerUrl = (customerId: string,) => {
+
+
+
+
+  return `http://localhost:8000/admin/customers/${customerId}`
+}
+
+/**
+ * @summary Delete Customer
+ */
+export const deleteCustomer = async (customerId: string, options?: RequestInit): Promise<deleteCustomerResponse> => {
+
+  const res = await fetch(getDeleteCustomerUrl(customerId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: deleteCustomerResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as deleteCustomerResponse
+}
+
+
+
+
+
+export const getDeleteCustomerMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCustomer>>, TError,{customerId: string}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCustomer>>, TError,{customerId: string}, TContext> => {
+
+const mutationKey = ['deleteCustomer'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCustomer>>, {customerId: string}> = (props) => {
+          const {customerId} = props ?? {};
+
+          return  deleteCustomer(customerId,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCustomer>>>
+
+    export type DeleteCustomerMutationError = HTTPValidationError
+
+    /**
+ * @summary Delete Customer
+ */
+export const useDeleteCustomer = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCustomer>>, TError,{customerId: string}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCustomer>>,
+        TError,
+        {customerId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteCustomerMutationOptions(options), queryClient);
+    }
+
+export type listShipmentsResponse200 = {
+  data: ShipmentRead[]
+  status: 200
+}
+
+export type listShipmentsResponseSuccess = (listShipmentsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listShipmentsResponse = (listShipmentsResponseSuccess)
+
+export const getListShipmentsUrl = () => {
+
+
+
+
+  return `http://localhost:8000/admin/shipments`
+}
+
+/**
+ * @summary List Shipments
+ */
+export const listShipments = async ( options?: RequestInit): Promise<listShipmentsResponse> => {
+
+  const res = await fetch(getListShipmentsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listShipmentsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as listShipmentsResponse
+}
+
+
+
+
+
+export const getListShipmentsQueryKey = () => {
+    return [
+    `http://localhost:8000/admin/shipments`
+    ] as const;
+    }
+
+
+export const getListShipmentsQueryOptions = <TData = Awaited<ReturnType<typeof listShipments>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listShipments>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListShipmentsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listShipments>>> = ({ signal }) => listShipments({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listShipments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListShipmentsQueryResult = NonNullable<Awaited<ReturnType<typeof listShipments>>>
+export type ListShipmentsQueryError = unknown
+
+
+export function useListShipments<TData = Awaited<ReturnType<typeof listShipments>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listShipments>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listShipments>>,
+          TError,
+          Awaited<ReturnType<typeof listShipments>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListShipments<TData = Awaited<ReturnType<typeof listShipments>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listShipments>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listShipments>>,
+          TError,
+          Awaited<ReturnType<typeof listShipments>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListShipments<TData = Awaited<ReturnType<typeof listShipments>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listShipments>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Shipments
+ */
+
+export function useListShipments<TData = Awaited<ReturnType<typeof listShipments>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listShipments>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListShipmentsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type createShipmentResponse201 = {
+  data: ShipmentRead
+  status: 201
+}
+
+export type createShipmentResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type createShipmentResponseSuccess = (createShipmentResponse201) & {
+  headers: Headers;
+};
+export type createShipmentResponseError = (createShipmentResponse422) & {
+  headers: Headers;
+};
+
+export type createShipmentResponse = (createShipmentResponseSuccess | createShipmentResponseError)
+
+export const getCreateShipmentUrl = () => {
+
+
+
+
+  return `http://localhost:8000/admin/shipments`
+}
+
+/**
+ * @summary Create Shipment
+ */
+export const createShipment = async (shipmentCreate: ShipmentCreate, options?: RequestInit): Promise<createShipmentResponse> => {
+
+  const res = await fetch(getCreateShipmentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(shipmentCreate)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createShipmentResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as createShipmentResponse
+}
+
+
+
+
+
+export const getCreateShipmentMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createShipment>>, TError,{data: ShipmentCreate}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof createShipment>>, TError,{data: ShipmentCreate}, TContext> => {
+
+const mutationKey = ['createShipment'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createShipment>>, {data: ShipmentCreate}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createShipment(data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateShipmentMutationResult = NonNullable<Awaited<ReturnType<typeof createShipment>>>
+    export type CreateShipmentMutationBody = ShipmentCreate
+    export type CreateShipmentMutationError = HTTPValidationError
+
+    /**
+ * @summary Create Shipment
+ */
+export const useCreateShipment = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createShipment>>, TError,{data: ShipmentCreate}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createShipment>>,
+        TError,
+        {data: ShipmentCreate},
+        TContext
+      > => {
+      return useMutation(getCreateShipmentMutationOptions(options), queryClient);
+    }
+
+export type getShipmentResponse200 = {
+  data: ShipmentRead
+  status: 200
+}
+
+export type getShipmentResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type getShipmentResponseSuccess = (getShipmentResponse200) & {
+  headers: Headers;
+};
+export type getShipmentResponseError = (getShipmentResponse422) & {
+  headers: Headers;
+};
+
+export type getShipmentResponse = (getShipmentResponseSuccess | getShipmentResponseError)
+
+export const getGetShipmentUrl = (shipmentId: string,) => {
+
+
+
+
+  return `http://localhost:8000/admin/shipments/${shipmentId}`
+}
+
+/**
+ * @summary Get Shipment
+ */
+export const getShipment = async (shipmentId: string, options?: RequestInit): Promise<getShipmentResponse> => {
+
+  const res = await fetch(getGetShipmentUrl(shipmentId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getShipmentResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getShipmentResponse
+}
+
+
+
+
+
+export const getGetShipmentQueryKey = (shipmentId: string,) => {
+    return [
+    `http://localhost:8000/admin/shipments/${shipmentId}`
+    ] as const;
+    }
+
+
+export const getGetShipmentQueryOptions = <TData = Awaited<ReturnType<typeof getShipment>>, TError = HTTPValidationError>(shipmentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShipment>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetShipmentQueryKey(shipmentId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getShipment>>> = ({ signal }) => getShipment(shipmentId, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: shipmentId !== null && shipmentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getShipment>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetShipmentQueryResult = NonNullable<Awaited<ReturnType<typeof getShipment>>>
+export type GetShipmentQueryError = HTTPValidationError
+
+
+export function useGetShipment<TData = Awaited<ReturnType<typeof getShipment>>, TError = HTTPValidationError>(
+ shipmentId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShipment>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getShipment>>,
+          TError,
+          Awaited<ReturnType<typeof getShipment>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetShipment<TData = Awaited<ReturnType<typeof getShipment>>, TError = HTTPValidationError>(
+ shipmentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShipment>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getShipment>>,
+          TError,
+          Awaited<ReturnType<typeof getShipment>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetShipment<TData = Awaited<ReturnType<typeof getShipment>>, TError = HTTPValidationError>(
+ shipmentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShipment>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Shipment
+ */
+
+export function useGetShipment<TData = Awaited<ReturnType<typeof getShipment>>, TError = HTTPValidationError>(
+ shipmentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getShipment>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetShipmentQueryOptions(shipmentId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type updateShipmentResponse200 = {
+  data: ShipmentRead
+  status: 200
+}
+
+export type updateShipmentResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type updateShipmentResponseSuccess = (updateShipmentResponse200) & {
+  headers: Headers;
+};
+export type updateShipmentResponseError = (updateShipmentResponse422) & {
+  headers: Headers;
+};
+
+export type updateShipmentResponse = (updateShipmentResponseSuccess | updateShipmentResponseError)
+
+export const getUpdateShipmentUrl = (shipmentId: string,) => {
+
+
+
+
+  return `http://localhost:8000/admin/shipments/${shipmentId}`
+}
+
+/**
+ * @summary Update Shipment
+ */
+export const updateShipment = async (shipmentId: string,
+    shipmentUpdate: ShipmentUpdate, options?: RequestInit): Promise<updateShipmentResponse> => {
+
+  const res = await fetch(getUpdateShipmentUrl(shipmentId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(shipmentUpdate)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: updateShipmentResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as updateShipmentResponse
+}
+
+
+
+
+
+export const getUpdateShipmentMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateShipment>>, TError,{shipmentId: string;data: ShipmentUpdate}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof updateShipment>>, TError,{shipmentId: string;data: ShipmentUpdate}, TContext> => {
+
+const mutationKey = ['updateShipment'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateShipment>>, {shipmentId: string;data: ShipmentUpdate}> = (props) => {
+          const {shipmentId,data} = props ?? {};
+
+          return  updateShipment(shipmentId,data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateShipmentMutationResult = NonNullable<Awaited<ReturnType<typeof updateShipment>>>
+    export type UpdateShipmentMutationBody = ShipmentUpdate
+    export type UpdateShipmentMutationError = HTTPValidationError
+
+    /**
+ * @summary Update Shipment
+ */
+export const useUpdateShipment = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateShipment>>, TError,{shipmentId: string;data: ShipmentUpdate}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateShipment>>,
+        TError,
+        {shipmentId: string;data: ShipmentUpdate},
+        TContext
+      > => {
+      return useMutation(getUpdateShipmentMutationOptions(options), queryClient);
+    }
+
+export type deleteShipmentResponse204 = {
+  data: void
+  status: 204
+}
+
+export type deleteShipmentResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type deleteShipmentResponseSuccess = (deleteShipmentResponse204) & {
+  headers: Headers;
+};
+export type deleteShipmentResponseError = (deleteShipmentResponse422) & {
+  headers: Headers;
+};
+
+export type deleteShipmentResponse = (deleteShipmentResponseSuccess | deleteShipmentResponseError)
+
+export const getDeleteShipmentUrl = (shipmentId: string,) => {
+
+
+
+
+  return `http://localhost:8000/admin/shipments/${shipmentId}`
+}
+
+/**
+ * @summary Delete Shipment
+ */
+export const deleteShipment = async (shipmentId: string, options?: RequestInit): Promise<deleteShipmentResponse> => {
+
+  const res = await fetch(getDeleteShipmentUrl(shipmentId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: deleteShipmentResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as deleteShipmentResponse
+}
+
+
+
+
+
+export const getDeleteShipmentMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteShipment>>, TError,{shipmentId: string}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteShipment>>, TError,{shipmentId: string}, TContext> => {
+
+const mutationKey = ['deleteShipment'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteShipment>>, {shipmentId: string}> = (props) => {
+          const {shipmentId} = props ?? {};
+
+          return  deleteShipment(shipmentId,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteShipmentMutationResult = NonNullable<Awaited<ReturnType<typeof deleteShipment>>>
+
+    export type DeleteShipmentMutationError = HTTPValidationError
+
+    /**
+ * @summary Delete Shipment
+ */
+export const useDeleteShipment = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteShipment>>, TError,{shipmentId: string}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteShipment>>,
+        TError,
+        {shipmentId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteShipmentMutationOptions(options), queryClient);
+    }
+
+export type listPackagesResponse200 = {
+  data: PackageRead[]
+  status: 200
+}
+
+export type listPackagesResponseSuccess = (listPackagesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listPackagesResponse = (listPackagesResponseSuccess)
+
+export const getListPackagesUrl = () => {
+
+
+
+
+  return `http://localhost:8000/admin/packages`
+}
+
+/**
+ * @summary List Packages
+ */
+export const listPackages = async ( options?: RequestInit): Promise<listPackagesResponse> => {
+
+  const res = await fetch(getListPackagesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listPackagesResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as listPackagesResponse
+}
+
+
+
+
+
+export const getListPackagesQueryKey = () => {
+    return [
+    `http://localhost:8000/admin/packages`
+    ] as const;
+    }
+
+
+export const getListPackagesQueryOptions = <TData = Awaited<ReturnType<typeof listPackages>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPackages>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPackagesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPackages>>> = ({ signal }) => listPackages({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPackages>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPackagesQueryResult = NonNullable<Awaited<ReturnType<typeof listPackages>>>
+export type ListPackagesQueryError = unknown
+
+
+export function useListPackages<TData = Awaited<ReturnType<typeof listPackages>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPackages>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPackages>>,
+          TError,
+          Awaited<ReturnType<typeof listPackages>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPackages<TData = Awaited<ReturnType<typeof listPackages>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPackages>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPackages>>,
+          TError,
+          Awaited<ReturnType<typeof listPackages>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPackages<TData = Awaited<ReturnType<typeof listPackages>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPackages>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Packages
+ */
+
+export function useListPackages<TData = Awaited<ReturnType<typeof listPackages>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPackages>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPackagesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type createPackageResponse201 = {
+  data: PackageRead
+  status: 201
+}
+
+export type createPackageResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type createPackageResponseSuccess = (createPackageResponse201) & {
+  headers: Headers;
+};
+export type createPackageResponseError = (createPackageResponse422) & {
+  headers: Headers;
+};
+
+export type createPackageResponse = (createPackageResponseSuccess | createPackageResponseError)
+
+export const getCreatePackageUrl = () => {
+
+
+
+
+  return `http://localhost:8000/admin/packages`
+}
+
+/**
+ * @summary Create Package
+ */
+export const createPackage = async (packageCreate: PackageCreate, options?: RequestInit): Promise<createPackageResponse> => {
+
+  const res = await fetch(getCreatePackageUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(packageCreate)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createPackageResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as createPackageResponse
+}
+
+
+
+
+
+export const getCreatePackageMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPackage>>, TError,{data: PackageCreate}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof createPackage>>, TError,{data: PackageCreate}, TContext> => {
+
+const mutationKey = ['createPackage'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPackage>>, {data: PackageCreate}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPackage(data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePackageMutationResult = NonNullable<Awaited<ReturnType<typeof createPackage>>>
+    export type CreatePackageMutationBody = PackageCreate
+    export type CreatePackageMutationError = HTTPValidationError
+
+    /**
+ * @summary Create Package
+ */
+export const useCreatePackage = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPackage>>, TError,{data: PackageCreate}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPackage>>,
+        TError,
+        {data: PackageCreate},
+        TContext
+      > => {
+      return useMutation(getCreatePackageMutationOptions(options), queryClient);
+    }
+
+export type getPackageResponse200 = {
+  data: PackageRead
+  status: 200
+}
+
+export type getPackageResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type getPackageResponseSuccess = (getPackageResponse200) & {
+  headers: Headers;
+};
+export type getPackageResponseError = (getPackageResponse422) & {
+  headers: Headers;
+};
+
+export type getPackageResponse = (getPackageResponseSuccess | getPackageResponseError)
+
+export const getGetPackageUrl = (packageId: string,) => {
+
+
+
+
+  return `http://localhost:8000/admin/packages/${packageId}`
+}
+
+/**
+ * @summary Get Package
+ */
+export const getPackage = async (packageId: string, options?: RequestInit): Promise<getPackageResponse> => {
+
+  const res = await fetch(getGetPackageUrl(packageId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getPackageResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getPackageResponse
+}
+
+
+
+
+
+export const getGetPackageQueryKey = (packageId: string,) => {
+    return [
+    `http://localhost:8000/admin/packages/${packageId}`
+    ] as const;
+    }
+
+
+export const getGetPackageQueryOptions = <TData = Awaited<ReturnType<typeof getPackage>>, TError = HTTPValidationError>(packageId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPackage>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPackageQueryKey(packageId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPackage>>> = ({ signal }) => getPackage(packageId, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: packageId !== null && packageId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPackage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPackageQueryResult = NonNullable<Awaited<ReturnType<typeof getPackage>>>
+export type GetPackageQueryError = HTTPValidationError
+
+
+export function useGetPackage<TData = Awaited<ReturnType<typeof getPackage>>, TError = HTTPValidationError>(
+ packageId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPackage>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPackage>>,
+          TError,
+          Awaited<ReturnType<typeof getPackage>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPackage<TData = Awaited<ReturnType<typeof getPackage>>, TError = HTTPValidationError>(
+ packageId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPackage>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPackage>>,
+          TError,
+          Awaited<ReturnType<typeof getPackage>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPackage<TData = Awaited<ReturnType<typeof getPackage>>, TError = HTTPValidationError>(
+ packageId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPackage>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Package
+ */
+
+export function useGetPackage<TData = Awaited<ReturnType<typeof getPackage>>, TError = HTTPValidationError>(
+ packageId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPackage>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPackageQueryOptions(packageId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type updatePackageResponse200 = {
+  data: PackageRead
+  status: 200
+}
+
+export type updatePackageResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type updatePackageResponseSuccess = (updatePackageResponse200) & {
+  headers: Headers;
+};
+export type updatePackageResponseError = (updatePackageResponse422) & {
+  headers: Headers;
+};
+
+export type updatePackageResponse = (updatePackageResponseSuccess | updatePackageResponseError)
+
+export const getUpdatePackageUrl = (packageId: string,) => {
+
+
+
+
+  return `http://localhost:8000/admin/packages/${packageId}`
+}
+
+/**
+ * @summary Update Package
+ */
+export const updatePackage = async (packageId: string,
+    packageUpdate: PackageUpdate, options?: RequestInit): Promise<updatePackageResponse> => {
+
+  const res = await fetch(getUpdatePackageUrl(packageId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(packageUpdate)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: updatePackageResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as updatePackageResponse
+}
+
+
+
+
+
+export const getUpdatePackageMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePackage>>, TError,{packageId: string;data: PackageUpdate}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePackage>>, TError,{packageId: string;data: PackageUpdate}, TContext> => {
+
+const mutationKey = ['updatePackage'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePackage>>, {packageId: string;data: PackageUpdate}> = (props) => {
+          const {packageId,data} = props ?? {};
+
+          return  updatePackage(packageId,data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePackageMutationResult = NonNullable<Awaited<ReturnType<typeof updatePackage>>>
+    export type UpdatePackageMutationBody = PackageUpdate
+    export type UpdatePackageMutationError = HTTPValidationError
+
+    /**
+ * @summary Update Package
+ */
+export const useUpdatePackage = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePackage>>, TError,{packageId: string;data: PackageUpdate}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updatePackage>>,
+        TError,
+        {packageId: string;data: PackageUpdate},
+        TContext
+      > => {
+      return useMutation(getUpdatePackageMutationOptions(options), queryClient);
+    }
+
+export type deletePackageResponse204 = {
+  data: void
+  status: 204
+}
+
+export type deletePackageResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type deletePackageResponseSuccess = (deletePackageResponse204) & {
+  headers: Headers;
+};
+export type deletePackageResponseError = (deletePackageResponse422) & {
+  headers: Headers;
+};
+
+export type deletePackageResponse = (deletePackageResponseSuccess | deletePackageResponseError)
+
+export const getDeletePackageUrl = (packageId: string,) => {
+
+
+
+
+  return `http://localhost:8000/admin/packages/${packageId}`
+}
+
+/**
+ * @summary Delete Package
+ */
+export const deletePackage = async (packageId: string, options?: RequestInit): Promise<deletePackageResponse> => {
+
+  const res = await fetch(getDeletePackageUrl(packageId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: deletePackageResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as deletePackageResponse
+}
+
+
+
+
+
+export const getDeletePackageMutationOptions = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePackage>>, TError,{packageId: string}, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePackage>>, TError,{packageId: string}, TContext> => {
+
+const mutationKey = ['deletePackage'];
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePackage>>, {packageId: string}> = (props) => {
+          const {packageId} = props ?? {};
+
+          return  deletePackage(packageId,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePackageMutationResult = NonNullable<Awaited<ReturnType<typeof deletePackage>>>
+
+    export type DeletePackageMutationError = HTTPValidationError
+
+    /**
+ * @summary Delete Package
+ */
+export const useDeletePackage = <TError = HTTPValidationError,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePackage>>, TError,{packageId: string}, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deletePackage>>,
+        TError,
+        {packageId: string},
+        TContext
+      > => {
+      return useMutation(getDeletePackageMutationOptions(options), queryClient);
     }
 
 export type chatStreamEventTypeResponse200 = {

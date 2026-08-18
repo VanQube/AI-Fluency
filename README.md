@@ -17,14 +17,13 @@ diagrams, Section 9 model setup). Live build status: `/docs/PROGRESS.md`.
 - React (Create React App + JavaScript) chat UI, styled with Tailwind CSS,
   talking to a real backend via generated React Query hooks (no hand-written
   fetch calls — Section 4.8)
-- FastAPI backend (`/health`, `/chat`, `/verify-code`) persisting every turn
-  to Postgres
+- FastAPI backend (`/health`, `/chat`, `/verify-code`, `/admin/*`)
+  persisting every chat turn to Postgres
 - Postgres with `customers` / `shipments` / `packages` / `chat_sessions`
   tables, seeded via `scripts/seed_data.py`
 - Ollama running on the **host** (not containerized — Section 4.7, Metal
-  acceleration) with `qwen3:8b` pulled and verified for tool-calling support
-- The backend's `/chat` endpoint calls Ollama directly and returns real model
-  replies through the chat UI
+  acceleration) with `qwen3:8b` pulled, used both for plain chat and native
+  tool-calling
 - Orval generates typed React Query hooks from the backend's live
   `/openapi.json` (`npm run generate:api` inside `frontend/`)
 - Full Docker Compose dev environment (frontend, backend, postgres containers)
@@ -35,21 +34,51 @@ diagrams, Section 9 model setup). Live build status: `/docs/PROGRESS.md`.
   (`backend/tools/verify_identity.py`), mocked 2FA with a 10-min expiry and
   3-attempt lockout (`backend/tools/`), the on-demand `CodeModal`, and the
   cosmetic human-escalation sequence (Epic G) are all wired end-to-end.
-
-There is **no shipment-lookup tool-calling yet (Epic F)** — a verified
-session can chat, but there's still nothing that hands it real shipment
-data. That's Week 3.
+  Routing between these branches (and the shipment/human-request intents
+  below) runs on a single-call LLM classifier (`backend/llm/intent_classifier.py`)
+  rather than hand-maintained regex, per the Week 2 design change.
+- **Tool-calling for shipment data (Epic F)** — verified sessions get real
+  answers via native Ollama tool-calling (`backend/tools/lookup_shipments.py`,
+  `chat_with_tools()` in `backend/llm/ollama_client.py`). The tool layer
+  always scopes lookups to `session.customer_id`, never a model- or
+  user-supplied id, and unverified branches are backstopped by a
+  disclosure-scanning guard (`_guarded_unverified_reply_stream` in
+  `backend/gating.py`) in case a routing miss lets a shipment question
+  through unverified. `scripts/test_tool_scoping.py` covers both the
+  structural scoping guarantees and a live adversarial prompt-injection
+  attempt.
+- **Admin panel + Auth0 (Epic E)** — a separate, Auth0-gated system (real
+  Authorization Code + PKCE login, not the chat's conversational
+  verification) for full CRUD on Customer/Shipment/Package records.
+  Backend JWT validation via `auth0-fastapi-api` (`backend/admin_auth.py`,
+  gating every `/admin/*` route); frontend login via `@auth0/auth0-react`
+  (`frontend/src/admin/`), reachable via the "Admin login" link on the chat
+  page or directly at `/admin`. Any authenticated Auth0 user is treated as
+  an admin — no separate allowlist/role check. Confirmed live: an admin
+  token has no effect on `/chat`/`/verify-code` and vice versa (Epic E4),
+  and an admin edit to a shipment shows up immediately in an already-open
+  verified chat session (no caching layer to invalidate).
 
 ## Not yet implemented
-- Tool-calling / gating enforcement for shipment data (`lookup_shipments`,
-  etc.) (Epic F)
-- Admin panel + Auth0 (Epic E)
+Everything through Week 4 (Epics A–G) is functionally complete and
+click-through verified. Remaining is Week 5 hardening/docs work: Section 6
+diagrams regenerated against the real build, an edge-case pass (expired
+codes, malformed input, mid-verification topic changes), and optional
+stretch goals (real Twilio SMS, llama.cpp, fully containerized Ollama, an
+admin chat-session viewer, a codegen-suggestion Agent Skill). Formal code
+review of the security-critical modules (`gating.py`, `tools/`,
+`routes/admin.py`, `admin_auth.py`) is also still open — see
+`docs/PROGRESS.md` for the running punch list.
 
 ## Tech stack
 - Frontend: React (Create React App) + JavaScript + Tailwind CSS + React
-  Query (via Orval-generated hooks)
+  Query (via Orval-generated hooks) + `react-router-dom` (chat vs. `/admin`)
 - Backend: Python + FastAPI + SQLAlchemy (sync), Postgres 16
-- Local LLM: Ollama (host-installed) running `qwen3:8b`
+- Local LLM: Ollama (host-installed) running `qwen3:8b`, used both for plain
+  chat and native tool-calling
+- Admin auth: Auth0 — `auth0-fastapi-api` (backend JWT validation),
+  `@auth0/auth0-react` (frontend login), built using the Auth0 Agent Skills
+  for Claude Code rather than a hand-rolled integration (Section 4.5)
 - Dev environment: Docker Compose (frontend, backend, postgres containers;
   Ollama stays on the host — see Section 4.7)
 
@@ -97,6 +126,10 @@ Seeded: 25 customers, 50 shipments (realistic status distribution), 74
 packages — via `scripts/seed_data.py`, re-runnable and deterministic (seeded
 RNG).
 
+There is no local `ADMIN_USER` table — Auth0 is the sole source of truth for
+admin identity (any authenticated Auth0 user is treated as an admin), per
+the ERD note in `docs/secureship/06-architecture.md`.
+
 ## Running it
 ```bash
 # 1. Ollama on the host (once)
@@ -109,11 +142,29 @@ docker compose up -d --build
 docker compose exec backend python scripts/seed_data.py   # first run only
 
 # App: http://localhost:3000
+# Admin panel: http://localhost:3000/admin (or the "Admin login" link on the
+#              chat page) — requires a real Auth0 tenant, see below
 # Backend health: http://localhost:8000/health
 # Backend OpenAPI: http://localhost:8000/openapi.json
 ```
 Whenever backend routes/schemas change: `cd frontend && npm run generate:api`
 to regenerate the typed hooks, then commit the regenerated output.
+
+**Admin panel / Auth0 setup:** the admin panel needs a real Auth0 tenant —
+an SPA application (for the React frontend) and an API resource (for the
+FastAPI backend), both created by hand in the Auth0 Dashboard (the Agent
+Skill accelerates the code, not the tenant itself — see Section 4.5). Once
+created, the SPA app must be explicitly authorized for the API under
+**Applications → APIs → [API] → Application Access → [app] →
+User-Delegated Access** (not the adjacent "Client Access" tab, which is for
+the unrelated machine-to-machine grant). The domain, SPA client ID, and API
+audience go into `docker-compose.yml`'s `environment:` blocks
+(`AUTH0_DOMAIN`/`AUTH0_AUDIENCE` for `backend`,
+`REACT_APP_AUTH0_DOMAIN`/`REACT_APP_AUTH0_CLIENT_ID`/`REACT_APP_AUTH0_AUDIENCE`
+for `frontend`) — none of these are secrets (no client secret is used; the
+SPA flow is public-client PKCE). The SPA app's Allowed Callback/Logout URLs
+need both `http://localhost:3000/admin` and bare `http://localhost:3000`
+(the logout button returns to the chat page, not back into `/admin`).
 
 ## Folder structure
 ```
@@ -124,23 +175,31 @@ to regenerate the typed hooks, then commit the regenerated output.
   /certificates          <- Skilljar certs from Section 2's parallel track
 /scripts
   seed_data.py           <- Postgres seed script (mounted into backend container)
+  test_tool_scoping.py    <- Epic F enforcement checks (structural + live adversarial)
 /frontend
   Dockerfile
   orval.config.js        <- points at backend's live /openapi.json
   tsconfig.json           <- generated-code-only TS support (see tradeoffs above)
   /src
+    App.js                <- routes: "/" (chat) vs "/admin" (ProtectedRoute + AdminApp)
+    index.js               <- QueryClientProvider, BrowserRouter, Auth0Provider
     /api/generated        <- Orval output, do not hand-edit
     /components          <- ChatWindow, MessageList, MessageInput, CodeModal
+    /admin                 <- Epic E — AdminApp, ProtectedRoute, CustomerManager,
+                              ShipmentManager, PackageManager, AdminTable, authFetch.js
 /backend
   Dockerfile
   main.py                <- app entrypoint, health-check, CORS
   gating.py               <- Section 6.2 state machine, orchestrates chat + verify-code
-  /routes                <- chat.py, verify.py
-  /tools                  <- verify_identity, send/check_verification_code, intent heuristics
-  /llm                     <- ollama_client.py, extraction.py (identity-field extraction)
+  admin_auth.py            <- Epic E3 — Auth0FastAPI JWT validation, require_admin dependency
+  /routes                <- chat.py, verify.py, admin.py
+  /tools                  <- verify_identity, send/check_verification_code,
+                              lookup_shipments (Epic F), intent.py (tracking-number regex only)
+  /llm                     <- ollama_client.py (plain chat + tool-calling),
+                              extraction.py (identity fields), intent_classifier.py (routing)
   /models                  <- Customer, Shipment, Package, ChatSession (SQLAlchemy)
   /db                      <- session.py (engine/session), base.py
-  /schemas                 <- Pydantic request/response models (chat.py, verify.py)
+  /schemas                 <- Pydantic request/response models (chat.py, verify.py, admin.py)
 docker-compose.yml
 README.md
 ```
