@@ -84,3 +84,24 @@ class PackageRead(PackageBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+
+
+# Week 5 stretch goal — admin chat session viewer. Read-only: no
+# create/update/delete, this only ever displays what gating.py already
+# wrote during real conversations.
+class ChatSessionSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    customer_id: Optional[UUID] = None
+    state: str
+    started_at: datetime.datetime
+    ended_at: Optional[datetime.datetime] = None
+
+
+class ChatSessionDetail(ChatSessionSummary):
+    # Array of {role, content, timestamp} — see models/chat_session.py.
+    # Left as list[dict] rather than a stricter model since the shape is
+    # intentionally flexible (Section 4.6) and this is a read-only viewer,
+    # not something validating writes.
+    transcript: list[dict]

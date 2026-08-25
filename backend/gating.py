@@ -145,7 +145,7 @@ def _handle_anonymous(
     if intent["gave_identity_info"]:
         session.state = "collecting_identity"
         session.collected_fields = {}
-        yield from _handle_collecting_identity(db, session, message)
+        yield from _handle_collecting_identity(db, session, message, intent)
         return
     if intent["wants_shipment_info"]:
         session.state = "collecting_identity"
@@ -169,11 +169,28 @@ def _handle_anonymous(
 
 
 def _handle_collecting_identity(
-    db: Session, session: ChatSession, message: str
+    db: Session, session: ChatSession, message: str, intent: dict
 ) -> Iterator[str]:
-    was_rejected = session.state == "identity_rejected"
-    if session.state in ("identity_rejected", "code_expired"):
+    # Covers both re-entry cases: a mismatch (identity_rejected) and an
+    # expired/locked code (code_expired) — see was_unresolved's use below.
+    was_unresolved = session.state in ("identity_rejected", "code_expired")
+    if was_unresolved:
         session.state = "collecting_identity"
+
+    # Epic A3's "give up mid-verification" path (Week 5 edge-case pass):
+    # re-entering here after a mismatch or an expired code doesn't mean the
+    # customer wants to keep trying. If this message isn't volunteering
+    # identity info, don't silently re-run extraction/re-verify — for
+    # code_expired specifically, collected_fields is already a full match
+    # from before, so skipping this check meant ANY message here silently
+    # re-verified and sent a brand-new code, ignoring whatever the customer
+    # actually said (e.g. "never mind, what's your return policy?").
+    # Release back to Anonymous instead, same as the mismatch give-up below.
+    if was_unresolved and not intent["gave_identity_info"]:
+        session.state = "anonymous"
+        session.collected_fields = {}
+        yield "No problem — let me know if there's anything else I can help with."
+        return
 
     # Extraction isn't shown to the user, so it stays a blocking call even
     # on the streaming path — only the conversational reply below streams.
@@ -194,8 +211,11 @@ def _handle_collecting_identity(
 
     customer = verify_identity(db, session.collected_fields)
     if customer is None:
+        # Defense in depth if the classifier's gave_identity_info missed:
+        # still bail out on unchanged fields after a prior mismatch/expiry,
+        # exactly as before this fix for the identity_rejected case.
         gave_no_new_info = session.collected_fields == previous_fields
-        if was_rejected and gave_no_new_info:
+        if was_unresolved and gave_no_new_info:
             session.state = "anonymous"
             session.collected_fields = {}
             yield "No problem — let me know if there's anything else I can help with."
@@ -451,7 +471,7 @@ def handle_turn_stream(db: Session, session: ChatSession, message: str) -> Itera
         yield from _handle_anonymous(db, session, message, intent)
         return
     if session.state in ("collecting_identity", "identity_rejected", "code_expired"):
-        yield from _handle_collecting_identity(db, session, message)
+        yield from _handle_collecting_identity(db, session, message, intent)
         return
     if session.state in ("code_sent", "awaiting_code"):
         yield from _handle_awaiting_code_chat_message(session, message)

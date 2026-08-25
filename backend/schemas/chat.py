@@ -2,12 +2,15 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
     session_id: Optional[UUID] = None
-    message: str
+    # Bounds a malformed/huge payload before it reaches the LLM call or the
+    # transcript JSONB column (Week 5 edge-case pass) — 4000 chars is well
+    # beyond anything a real chat message needs.
+    message: str = Field(min_length=1, max_length=4000)
 
 
 class ChatResponse(BaseModel):

@@ -1,8 +1,18 @@
 # Tool-calling sequence — WebSocket path (Section 6.3b, optional upgrade)
 
-Functionally identical gating logic to the HTTP sequence (04) — only the
-transport differs. Kept as reference in case the team later chooses WS over
-HTTP (Section 1.1/6.3); not a decision made yet.
+**Status as of Week 5 (2026-08-24): not adopted.** The team went with HTTP +
+Server-Sent Events instead (`POST /chat/stream`, see the real, implemented
+sequence in `04-tool-calling-sequence-http.md`) — SSE covered the actual
+requirement (token-by-token streaming for perceived latency, Section 8's
+Week 2 follow-up) without a second transport to maintain. This file is kept
+as an unbuilt reference only; the sequence below was never updated against
+real code because there is no real code behind it, and the message shapes
+below (`emit "message"`, `emit "verified"`, etc.) reflect the original
+target design, not any live wire protocol. The one idea worth remembering
+if this is ever revisited: the note at the bottom about push-based
+`shipment_updated` notifications is a genuine capability gap in the current
+HTTP/SSE build — an admin edit only shows up in an open chat on the
+customer's *next* message, not live.
 
 ```mermaid
 sequenceDiagram
