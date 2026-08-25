@@ -28,8 +28,9 @@ diagrams, Section 9 model setup). Live build status: `/docs/PROGRESS.md`.
   `/openapi.json` (`npm run generate:api` inside `frontend/`)
 - Full Docker Compose dev environment (frontend, backend, postgres containers)
 - **Identity collection + 2FA gate (Epics B, C, G)** — the full
-  Anonymous → CollectingIdentity → CodeSent/AwaitingCode → Verified state
-  machine, backend-orchestrated (not native LLM tool-calling — see
+  Anonymous → CollectingIdentity → AwaitingCode → Verified state machine
+  (see `docs/diagrams/02-conversation-state-machine.md` for the exact
+  transitions), backend-orchestrated (not native LLM tool-calling — see
   `docs/PROGRESS.md` Week 2 for the design call). Identity matching
   (`backend/tools/verify_identity.py`), mocked 2FA with a 10-min expiry and
   3-attempt lockout (`backend/tools/`), the on-demand `CodeModal`, and the
@@ -61,14 +62,26 @@ diagrams, Section 9 model setup). Live build status: `/docs/PROGRESS.md`.
 
 ## Not yet implemented
 Everything through Week 4 (Epics A–G) is functionally complete and
-click-through verified. Remaining is Week 5 hardening/docs work: Section 6
-diagrams regenerated against the real build, an edge-case pass (expired
-codes, malformed input, mid-verification topic changes), and optional
-stretch goals (real Twilio SMS, llama.cpp, fully containerized Ollama, an
-admin chat-session viewer, a codegen-suggestion Agent Skill). Formal code
-review of the security-critical modules (`gating.py`, `tools/`,
-`routes/admin.py`, `admin_auth.py`) is also still open — see
-`docs/PROGRESS.md` for the running punch list.
+click-through verified. Week 5's required hardening pass is done: code
+review closed out (Phase 0), diagrams regenerated (Phase 1), and an
+edge-case pass covering expired codes, malformed input, empty states, and
+the mid-verification give-up path (Phase 3) — including a real bug found
+and fixed (a customer who abandoned verification after a code expired was
+silently re-verified and sent a new code instead of being released back to
+free-form chat). Of the optional stretch goals: an admin chat-session
+viewer and a codegen-suggestion Agent Skill are done; containerizing Ollama
+was built, benchmarked, and deliberately **not** adopted as the default
+(kept as an opt-in `docker-compose.ollama.yml` override — CPU-only
+inference in the container was consistently slower than the host's
+Metal-accelerated setup, badly enough on a cold start to be disqualifying);
+real Twilio SMS was dropped — Twilio has no free trial for Serbia, and this
+is an unpaid training project. Mocked SMS (console/log only) stays the only
+2FA delivery path. llama.cpp instead of/alongside Ollama was never
+attempted and is also being dropped — the containerization benchmark
+already answered the interesting question here. See `docs/PROGRESS.md` for
+the full writeup of what was verified live (including how the llama.cpp
+goal got missed) and `docs/final-demo-script.md` for the Friday walkthrough
+plan.
 
 ## Tech stack
 - Frontend: React (Create React App) + JavaScript + Tailwind CSS + React
@@ -171,7 +184,8 @@ need both `http://localhost:3000/admin` and bare `http://localhost:3000`
 /docs
   SecureShip-5Week-Program.md
   system-prompt.md      <- persona spec, read by routes/chat.py
-  /diagrams             <- Mermaid diagrams from Section 6 (starting reference)
+  /diagrams             <- Mermaid diagrams from Section 6, regenerated
+                          against the real build (Week 5 Phase 1)
   /certificates          <- Skilljar certs from Section 2's parallel track
 /scripts
   seed_data.py           <- Postgres seed script (mounted into backend container)
@@ -186,7 +200,8 @@ need both `http://localhost:3000/admin` and bare `http://localhost:3000`
     /api/generated        <- Orval output, do not hand-edit
     /components          <- ChatWindow, MessageList, MessageInput, CodeModal
     /admin                 <- Epic E — AdminApp, ProtectedRoute, CustomerManager,
-                              ShipmentManager, PackageManager, AdminTable, authFetch.js
+                              ShipmentManager, PackageManager, AdminTable, authFetch.js,
+                              ChatSessionViewer (Week 5 stretch goal, read-only)
 /backend
   Dockerfile
   main.py                <- app entrypoint, health-check, CORS
@@ -201,6 +216,9 @@ need both `http://localhost:3000/admin` and bare `http://localhost:3000`
   /db                      <- session.py (engine/session), base.py
   /schemas                 <- Pydantic request/response models (chat.py, verify.py, admin.py)
 docker-compose.yml
+docker-compose.ollama.yml  <- opt-in override, containerized Ollama
+                              (Week 5 stretch goal — benchmarked, not
+                              adopted as default; see docs/PROGRESS.md)
 README.md
 ```
 

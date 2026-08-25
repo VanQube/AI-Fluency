@@ -3,11 +3,13 @@ import { useAuth0 } from '@auth0/auth0-react';
 import CustomerManager from './CustomerManager';
 import ShipmentManager from './ShipmentManager';
 import PackageManager from './PackageManager';
+import ChatSessionViewer from './ChatSessionViewer';
 
 const TABS = {
   customers: { label: 'Customers', Component: CustomerManager },
   shipments: { label: 'Shipments', Component: ShipmentManager },
   packages: { label: 'Packages', Component: PackageManager },
+  sessions: { label: 'Chat Sessions', Component: ChatSessionViewer },
 };
 
 // Epic E. ProtectedRoute (App.js) already guarantees isAuthenticated here —

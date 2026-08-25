@@ -7,8 +7,10 @@ from sqlalchemy.orm import Session
 
 from admin_auth import require_admin
 from db.session import get_db
-from models import Customer, Package, Shipment
+from models import ChatSession, Customer, Package, Shipment
 from schemas.admin import (
+    ChatSessionDetail,
+    ChatSessionSummary,
     CustomerCreate,
     CustomerRead,
     CustomerUpdate,
@@ -20,8 +22,9 @@ from schemas.admin import (
     ShipmentUpdate,
 )
 
-# Every route here is gated by require_admin (Epic E3) — currently a
-# placeholder, see admin_auth.py. Not protected against anything yet.
+# Every route here is gated by require_admin (Epic E3) — real Auth0 JWT
+# validation (signature/issuer/audience against the tenant's JWKS), see
+# admin_auth.py.
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
 
@@ -162,3 +165,21 @@ def delete_package(package_id: UUID, db: Session = Depends(get_db)) -> None:
     package = _get_or_404(db, Package, package_id)
     db.delete(package)
     db.commit()
+
+
+# --- Chat sessions (read-only, Week 5 stretch goal) -----------------------
+# Displays what gating.py already wrote during real conversations — the
+# escalation flag (state="escalated_to_human") and the gating-rejection
+# states (identity_rejected, code_expired) are the interesting rows to
+# pull up here, per Section 8's Week 5 plan.
+
+@router.get("/chat-sessions", response_model=List[ChatSessionSummary], operation_id="listChatSessions")
+def list_chat_sessions(db: Session = Depends(get_db)) -> List[ChatSession]:
+    return db.query(ChatSession).order_by(ChatSession.started_at.desc()).all()
+
+
+@router.get(
+    "/chat-sessions/{session_id}", response_model=ChatSessionDetail, operation_id="getChatSession"
+)
+def get_chat_session(session_id: UUID, db: Session = Depends(get_db)) -> ChatSession:
+    return _get_or_404(db, ChatSession, session_id)

@@ -1,0 +1,37 @@
+# Week 5 stretch goal (Section 4.7's bonus diagram): containerize Ollama
+# instead of running it on the host. This is an OPT-IN override, not a
+# replacement for docker-compose.yml's default setup — plain `docker compose
+# up` still runs Ollama on the host for Metal GPU acceleration (the reason
+# it was kept off containers in the first place, see README's tech stack
+# notes). Containerizing trades that acceleration away for portability
+# (the whole stack becomes `docker compose up`, no separate `ollama serve`
+# step) — whether that trade is worth it depends on how much slower
+# inference gets on this hardware, which needs a human to actually feel out.
+#
+# Try it:
+#   docker compose -f docker-compose.yml -f docker-compose.ollama.yml up -d --build
+# Back to the default (host Ollama):
+#   docker compose up -d
+#
+# The host's already-pulled model weights (~/.ollama/models, ~5GB for
+# qwen3:8b) are bind-mounted in rather than re-downloaded — Ollama's blob/
+# manifest storage format is portable, so the container should see the same
+# models without a fresh `ollama pull`.
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      # 11434 is likely already taken by the host's own Ollama install —
+      # 11435 avoids the collision. Only useful for direct inspection
+      # (curl/ollama CLI against the container); the backend talks to it
+      # over the internal Docker network (OLLAMA_HOST below), not this port.
+      - "11435:11434"
+    volumes:
+      - ${HOME}/.ollama/models:/root/.ollama/models
+    restart: unless-stopped
+
+  backend:
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
